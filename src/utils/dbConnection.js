@@ -1,4 +1,4 @@
-import pg from "pg"; //we need to install the pg package
+import pg from "pg"; 
 
 const dbConnectionString = process.env.DATABASE_URL;
 
