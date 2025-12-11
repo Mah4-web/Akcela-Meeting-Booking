@@ -6,8 +6,8 @@ import Link from "next/link";
 const SLOT_INTERVAL_MINUTES = 15;
 const MAX_BOOKING_MINUTES = 120;
 const MAX_SLOTS_PER_BOOKING = MAX_BOOKING_MINUTES / SLOT_INTERVAL_MINUTES;
-const START_HOUR = 9;
-const END_HOUR = 17;
+const START_HOUR = 8;
+const END_HOUR = 24;
 
 function generateSlots() {
   const slots = [];
@@ -290,12 +290,13 @@ export default function DayBookingPage({ params }) {
             return (
               <button
                 key={slot.index}
-                className={`slot-cell ${extraClass}`}
+                className={`slot-cell ${booked ? "slot-booked" : selected ? "slot-selected" : ""}`}
                 onClick={() => handleSlotClick(slot.index)}
                 disabled={booked || loading}
-              >
+                  >
                 {slot.label}
               </button>
+
             );
           })}
         </section>
@@ -314,7 +315,7 @@ export default function DayBookingPage({ params }) {
                   return (
                     <li key={b.id} className="booking-item">
                       <span className="booking-time">
-                        {start} – {end}
+                        {start} &ndash; {end}
                       </span>
                       <span className="booking-name">{b.customerName}</span>
                     </li>
