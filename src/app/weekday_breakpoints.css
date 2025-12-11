@@ -1,0 +1,38 @@
+/* Turn the calendar wrapper into a container */
+.calendar-container {
+  container-type: inline-size;
+  container-name: calendar;
+}
+
+/* Default: full labels */
+.weekday-full {
+  display: inline;
+}
+.weekday-med,
+.weekday-short {
+  display: none;
+}
+
+/* When calendar is narrower */
+@container calendar (max-width: 650px) {
+  .weekday-full {
+    display: none;
+  }
+  .weekday-med {
+    display: inline;
+  }
+  .weekday-short {
+    display: none;
+  }
+}
+
+/* When calendar is very narrow */
+@container calendar (max-width: 400px) {
+  .weekday-full,
+  .weekday-med {
+    display: none;
+  }
+  .weekday-short {
+    display: inline;
+  }
+}
