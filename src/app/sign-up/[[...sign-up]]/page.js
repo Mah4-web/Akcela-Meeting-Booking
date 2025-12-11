@@ -7,9 +7,9 @@ export default function SignUpPage() {
         Sign up for Akcela Meeting Booking
         </h1>
 
-        <div className="w-full max-w-md rounded-2xl p-8 bg-(--color-glass-bg) border border-(--color-glass-border) shadow-lg backdrop-blur-md">
+       
         <SignUp />
-        </div>
+
     </main>
     );
 }

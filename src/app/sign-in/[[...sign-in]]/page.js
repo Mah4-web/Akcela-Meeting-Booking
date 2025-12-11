@@ -7,9 +7,9 @@ export default function SignInPage() {
         Sign in to Akcela Meeting Booking
         </h1>
 
-        <div className="w-full max-w-md rounded-2xl p-8 bg-(--color-glass-bg) border border-(--color-glass-border) shadow-lg backdrop-blur-md">
+        {/* <div className="w-full [&>*]:mx-auto max-w-md rounded-2xl py-8 bg-(--color-glass-bg) border border-(--color-glass-border) shadow-lg backdrop-blur-md"> */}
         <SignIn />
-        </div>
+        {/* </div> */}
 
     </main>
     );
