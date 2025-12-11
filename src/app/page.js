@@ -19,6 +19,9 @@ export default function HomePage() {
 
             </div>
 
+      <div className="flex">
+        <div>
+          <a href="/sign-in">Sign In</a>
         </div>
     )
 }
