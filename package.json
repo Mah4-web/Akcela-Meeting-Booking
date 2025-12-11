@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.2",
+    "@supabase/supabase-js": "^2.87.1",
     "date-fns": "^4.1.0",
     "next": "16.0.8",
     "pg": "^8.16.3",
