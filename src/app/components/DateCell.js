@@ -1,10 +1,12 @@
-export default function DateCell({ shortDate, fullDate, isToday }) {
-    return (
-        <div>
-            {isToday ? 
-            <button className="p-1 sm:p-2 rounded-lg bg-black text-white w-full hover:bg-blue-600 hover:text-white hover:duration-500 hover:cursor-pointer">{shortDate}</button> 
-            : 
-            <button className="p-1 sm:p-2 border rounded-lg w-full hover:bg-blue-600 hover:text-white hover:duration-500 hover:cursor-pointer">{shortDate}</button>}
-        </div>
-    );
+"use client";
+
+export default function DateCell({ dayNumber, isToday, onClick }) {
+  return (
+    <button
+      className={`date-cell ${isToday ? "date-cell-today" : ""}`}
+      onClick={onClick}
+    >
+      <span>{dayNumber}</span>
+    </button>
+  );
 }

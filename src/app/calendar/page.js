@@ -1,26 +1,73 @@
-import CalendarMonth from "../components/CalendarMonth";
-import DateCell from "../components/DateCell"
+"use client";
 
-export default function Calendar() {
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import CalendarMonth from "./components/CalendarMonth";
 
-    const today = new Date();
-    const month = today.getMonth() + 1;
+export default function CalendarPage() {
+  const router = useRouter();
 
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth()); // 0-11
 
-    return (
-        
-        <div className="flex flex-col items-center justify-center p-8">
-            <h1 className="text-center font-extrabold">Akcela Booking Calendar</h1>
-            
-            <p>Select a date to book your 2 hour slot</p>
+  const handlePrevMonth = () => {
+    setMonth((m) => {
+      if (m === 0) {
+        setYear((y) => y - 1);
+        return 11;
+      }
+      return m - 1;
+    });
+  };
 
-            <div className="min-h-screen w-full">
+  const handleNextMonth = () => {
+    setMonth((m) => {
+      if (m === 11) {
+        setYear((y) => y + 1);
+        return 0;
+      }
+      return m + 1;
+    });
+  };
 
-            <CalendarMonth month={month} current_date={today} />
+  const handleSelectDate = (dateString) => {
+    router.push(`/calendar/${dateString}`);
+  };
 
-            </div>
+  const monthName = new Date(year, month, 1).toLocaleString("default", {
+    month: "long",
+    year: "numeric",
+  });
 
-        </div>
+  return (
+    <main className="calendar-root">
+      <div className="calendar-card">
+        <header className="calendar-header">
+          <div>
+            <h1 className="calendar-title">Room Booking Calendar</h1>
+            <p className="calendar-subtitle">
+              Select a day to book 15-minute time slots (max 2 hours)
+            </p>
+          </div>
 
-    )
+          <div className="calendar-nav">
+            <button onClick={handlePrevMonth} className="btn-secondary">
+              ‹
+            </button>
+            <span className="calendar-month-label">{monthName}</span>
+            <button onClick={handleNextMonth} className="btn-secondary">
+              ›
+            </button>
+          </div>
+        </header>
+
+        <CalendarMonth
+          year={year}
+          month={month}
+          onSelectDate={handleSelectDate}
+        />
+      </div>
+    </main>
+  );
 }
