@@ -1,90 +1,42 @@
+"use client";
+
+import { useState } from "react";
 import CalendarMonth from "../components/CalendarMonth";
-import DateCell from "../components/DateCell"
+import WeeklyView from "../components/WeeklyView";
+import { subWeeks, addWeeks } from "date-fns";
 
-export default function Calendar() {
+export default function CalendarPage() {
+  const today = new Date();
+  const [weekStart, setWeekStart] = useState(today);
 
-    const today = new Date();
-    const month = today.getMonth() + 1;
+  const handlePrevWeek = () => setWeekStart(subWeeks(weekStart, 1));
+  const handleNextWeek = () => setWeekStart(addWeeks(weekStart, 1));
 
+  return (
+    <div className="flex flex-col md:flex-row p-4 md:p-8 gap-6 bg-(--color-gray-light) min-h-screen">
+      
+      {/* Mini calendar on top for mobile, left for desktop */}
+      <div className="w-full md:w-1/4 mb-6 md:mb-0">
+        <h1 className="text-center font-extrabold text-2xl mb-2 text-black">
+          Akcela Booking Calendar
+        </h1>
+        <p className="text-center mb-4 text-(--color-gray-dark)">
+          Select a date to book your 2 hour slot
+        </p>
 
-    return (
-        
-        <div className="flex flex-col sm:flex-row p-8">
-
-            <div className="flex flex-col">
-                <h1 className="text-center font-extrabold">Akcela Booking Calendar</h1>
-                
-                <p className="text-center">Select a date to book your 2 hour slot</p>
-
-                <div className="min-h-screen w-full min-w-[320px]">
-
-                    <CalendarMonth month={month} current_date={today} />
-
-                </div>
-
-            </div>
-
-            <div className="grow bg-green-500 w-full min-h-screen grid grid-cols-7 grid-rows-7 gap-2 [&>*]:bg-green-400 [&>*]:flex [&>*]:items-center [&>*]:justify-center p-8">
-
-                <div>Mon</div>
-                <div>Tue</div>
-                <div>Wed</div>
-                <div>Thu</div>
-                <div>Fri</div>
-                <div>Sat</div>
-                <div>Sun</div>  
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-            </div>
-
+        <div className="bg-(--color-glass-bg) border border-(--color-glass-border) rounded-2xl p-2 backdrop-blur-md shadow-xl">
+          <CalendarMonth month={today.getMonth() + 1} today={today} />
         </div>
+      </div>
 
-    )
+      {/* Weekly booking view */}
+      <div className="flex-1">
+        <WeeklyView
+          weekStart={weekStart}
+          onPrevWeek={handlePrevWeek}
+          onNextWeek={handleNextWeek}
+        />
+      </div>
+    </div>
+  );
 }

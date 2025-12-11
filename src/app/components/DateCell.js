@@ -1,10 +1,26 @@
-export default function DateCell({ shortDate, fullDate, isToday }) {
-    return (
-        <div>
-            {isToday ? 
-            <button className="rounded-lg shadow-2xl bg-black text-white w-full hover:bg-blue-600 hover:text-white hover:duration-500 hover:cursor-pointer text-center">{shortDate}</button> 
-            : 
-            <button className="border shadow-2xl  rounded-lg w-full hover:bg-blue-600 hover:text-white hover:duration-500 hover:cursor-pointer text-center">{shortDate}</button>}
-        </div>
-    );
+export default function DateCell({
+  shortDate,
+  isToday,
+  onClick,
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        p-2 rounded-lg shadow-md
+        border border-(--color-glass-border)
+        backdrop-blur-md
+        transition
+        duration-200
+        text-center
+        ${
+          isToday
+            ? "bg-black text-white"
+            : "bg-white/20 hover:bg-white/40"
+        }
+      `}
+    >
+      {shortDate}
+    </button>
+  );
 }

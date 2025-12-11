@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root {
+ :root {
   --background: #ffffff;
   --foreground: #171717;
   --color-gray-light: #f5f5f5;
@@ -10,4 +10,54 @@
   --color-beige: #f5f0e1; 
   --shadow-glass: 0 10px 25px rgba(0, 0, 0, 0.2);
   --shadow-glass-hover: 0 15px 35px rgba(0, 0, 0, 0.25);
+} 
+
+.calendar-container {
+  container-type: inline-size;
+  container-name: calendar;
 }
+
+.weekday-full { display: inline; }
+.weekday-med, .weekday-short { display: none; }
+
+@container calendar (max-width: 650px) {
+  .weekday-full { display: none; }
+  .weekday-med { display: inline; }
+}
+@container calendar (max-width: 400px) {
+  .weekday-full, .weekday-med { display: none; }
+  .weekday-short { display: inline; }
+} 
+
+/* Glass Slot */
+.slot-cell {
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: all 0.2s;
+}
+.slot-cell:hover {
+  background: rgba(255,255,255,0.35);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+.slot-booked {
+  background: rgba(255,0,0,0.5);
+  cursor: not-allowed;
+}
+.slot-selected {
+  background: rgba(0, 128, 255, 0.4);
+}
+
+.btn-glass {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(6px);
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+}
+.btn-glass:hover {
+  background: rgba(255,255,255,0.35);
+}  
