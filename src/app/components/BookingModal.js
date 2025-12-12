@@ -9,16 +9,21 @@ export default function BookingModal({ booking, user, onClose }) {
   const isOwner = user?.id === booking.booked_by;
 
   const handleDelete = async () => {
-    if (!isAdmin) return;
+    if (!isAdmin && !isOwner) return;
     setLoading(true);
-    await fetch("/api/bookings/delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookingId: booking.id }),
-    });
-    setLoading(false);
-    onClose();
-    window.location.reload(); // reload to update calendar
+    try {
+      await fetch("/api/bookings/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: booking.id }),
+      });
+      onClose();
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,7 +34,7 @@ export default function BookingModal({ booking, user, onClose }) {
         <p className="mb-1 text-black">
           Date: {new Date(booking.date).toLocaleDateString()}
         </p>
-        {isAdmin || isOwner ? (
+        {(isAdmin || isOwner) ? (
           <>
             <p className="mb-1 text-black">Customer: {booking.customerName}</p>
             <p className="mb-1 text-black">Purpose: {booking.purpose}</p>
@@ -37,7 +42,6 @@ export default function BookingModal({ booking, user, onClose }) {
         ) : (
           <p className="mb-1 text-black">This time is booked</p>
         )}
-
         <div className="mt-4 flex justify-end gap-2">
           {(isAdmin || isOwner) && (
             <button
