@@ -1,90 +1,106 @@
-import CalendarMonth from "../components/CalendarMonth";
-import DateCell from "../components/DateCell"
+"use client";
 
-export default function Calendar() {
+import { useState, useEffect } from "react";
+import WeeklyView from "../components/WeeklyView";
+import DayView from "../components/DayView";
+import BookingFormModal from "../components/BookingFormModal"; // updated modal
+import { subWeeks, addWeeks, format } from "date-fns";
 
-    const today = new Date();
-    const month = today.getMonth() + 1;
+export default function CalendarPage() {
+  const today = new Date();
+  const [weekStart, setWeekStart] = useState(today);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
+  const handlePrevWeek = () => setWeekStart(subWeeks(weekStart, 1));
+  const handleNextWeek = () => setWeekStart(addWeeks(weekStart, 1));
 
-    return (
-        
-        <div className="flex flex-col sm:flex-row p-8">
+  const openBookingModal = (booking = null) => {
+    setSelectedBooking(booking);
+    setModalOpen(true);
+  };
 
-            <div className="flex flex-col">
-                <h1 className="text-center font-extrabold">Akcela Booking Calendar</h1>
-                
-                <p className="text-center">Select a date to book your 2 hour slot</p>
+  const closeBookingModal = () => {
+    setSelectedBooking(null);
+    setModalOpen(false);
+  };
 
-                <div className="min-h-screen w-full min-w-[320px]">
+  useEffect(() => {
+    async function loadBookings() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/bookings");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load bookings");
+        setBookings(data.bookings || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadBookings();
+  }, []);
 
-                    <CalendarMonth month={month} current_date={today} />
+  // Only show booked timeslots to guests, full details to logged-in users handled in modal
+  const sanitizedBookings = bookings.map((b) => ({
+    ...b,
+    customerName: b.customerName ? b.customerName : "Booked",
+  }));
 
-                </div>
+  return (
+    <main className="flex flex-col md:flex-row p-4 md:p-8 gap-6 bg-(--color-gray-light) min-h-screen">
+      {/* Weekly View */}
+      <div className="flex-1">
+        <WeeklyView
+          weekStart={weekStart}
+          onPrevWeek={handlePrevWeek}
+          onNextWeek={handleNextWeek}
+          bookings={sanitizedBookings}
+          onSlotClick={openBookingModal}
+        />
+      </div>
 
-            </div>
+      {/* Day View for selected day */}
+      <div className="w-full md:w-1/4 mb-6 md:mb-0">
+        <h1 className="text-center font-extrabold text-2xl mb-2 text-black">
+          Akcela Booking Calendar
+        </h1>
+        <DayView
+          date={today}
+          bookings={sanitizedBookings}
+          onSlotClick={openBookingModal}
+        />
+      </div>
 
-            <div className="grow bg-green-500 w-full min-h-screen grid grid-cols-7 grid-rows-7 gap-2 [&>*]:bg-green-400 [&>*]:flex [&>*]:items-center [&>*]:justify-center p-8">
+      {/* Booking Modal */}
+      {modalOpen && (
+        <BookingFormModal
+          booking={selectedBooking}
+          onClose={closeBookingModal}
+          onSave={(newBooking) => {
+            setBookings((prev) => {
+              const filtered = prev.filter((b) => b.id !== newBooking.id);
+              return [...filtered, newBooking];
+            });
+            closeBookingModal();
+          }}
+          onDelete={(deletedBookingId) => {
+            setBookings((prev) =>
+              prev.filter((b) => b.id !== deletedBookingId)
+            );
+            closeBookingModal();
+          }}
+        />
+      )}
 
-                <div>Mon</div>
-                <div>Tue</div>
-                <div>Wed</div>
-                <div>Thu</div>
-                <div>Fri</div>
-                <div>Sat</div>
-                <div>Sun</div>  
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-
-            </div>
-
+      {loading && (
+        <div className="absolute top-4 right-4 p-2 bg-white/80 rounded shadow">
+          Loading bookings...
         </div>
-
-    )
+      )}
+    </main>
+  );
 }

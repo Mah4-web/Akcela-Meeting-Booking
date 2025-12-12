@@ -1,31 +1,83 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { useUser, SignedIn, SignedOut, SignInButton, SignOutButton } from "@clerk/nextjs";
+import CalendarMonth from "./components/CalendarMonth";
+import WeeklyView from "./components/WeeklyView";
+import BookingModal from "./components/BookingModal"; // your modal
+import { subWeeks, addWeeks } from "date-fns";
 
 export default function HomePage() {
+  const today = new Date();
+  const [weekStart, setWeekStart] = useState(today);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const { user, isSignedIn } = useUser();
+
+  const handlePrevWeek = () => setWeekStart(subWeeks(weekStart, 1));
+  const handleNextWeek = () => setWeekStart(addWeeks(weekStart, 1));
+
+  const handleSlotClick = (date) => {
+    if (!isSignedIn) {
+      window.location.href = "/sign-in"; // redirect to sign-in
+      return;
+    }
+    setSelectedDate(date);
+    setModalOpen(true);
+  };
+
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 bg-(--color-gray-light)">
-      <h1 className="text-4xl md:text-5xl font-bold mb-4 text-black text-center">
-        Welcome to Akcela Meeting Booking
-      </h1>
-        <p className="mb-8 text-(--color-gray-dark) text-center max-w-xl">
-        Effortlessly schedule, manage, and track all your meetings in one place.
-        Join Akcela today to simplify your workflow, collaborate seamlessly, and stay on top of your schedule.
-      </p>
+    <div className="flex flex-col md:flex-row p-4 md:p-8 gap-6 bg-(--color-gray-light) min-h-screen">
+      
+      {/* Left: Mini Calendar */}
+      <div className="w-full md:w-1/4 mb-6 md:mb-0">
+        <div className="flex justify-between items-center mb-2">
+          <h1 className="text-center font-extrabold text-2xl text-black">
+            Akcela Booking Calendar
+          </h1>
+          <SignedIn>
+            <SignOutButton>
+              <button className="btn-glass">Logout</button>
+            </SignOutButton>
+          </SignedIn>
+          <SignedOut>
+            <SignInButton>
+              <button className="btn-glass">Sign In</button>
+            </SignInButton>
+          </SignedOut>
+        </div>
+        <p className="text-center mb-4 text-(--color-gray-dark)">
+          Select a date to book your 2-hour slot
+        </p>
 
-      <div className="flex flex-col md:flex-row gap-6">
-        <Link
-          href="/sign-in"
-          className="bg-(--color-glass-bg) backdrop-blur-md border border-(--color-glass-border) shadow-lg rounded-2xl px-8 py-4 text-black font-semibold text-center transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-black"
-        >
-          Sign In
-        </Link>
-
-        <Link
-          href="/sign-up"
-          className="bg-(--color-glass-bg) backdrop-blur-md border border-(--color-glass-border) shadow-lg rounded-2xl px-8 py-4 text-black font-semibold text-center transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-black"
-        >
-          Sign Up
-        </Link>
+        <div className="bg-(--color-glass-bg) border border-(--color-glass-border) rounded-2xl p-2 backdrop-blur-md shadow-xl">
+          <CalendarMonth
+            month={today.getMonth() + 1}
+            today={today}
+            onSelectDate={handleSlotClick}
+          />
+        </div>
       </div>
-    </main>
+
+      {/* Right: Weekly Booking View */}
+      <div className="flex-1">
+        <WeeklyView
+          weekStart={weekStart}
+          onPrevWeek={handlePrevWeek}
+          onNextWeek={handleNextWeek}
+          onSlotClick={handleSlotClick}
+        />
+      </div>
+
+      {/* Booking Modal */}
+      {modalOpen && selectedDate && (
+        <BookingModal
+          date={selectedDate}
+          onClose={() => setModalOpen(false)}
+          user={user}
+        />
+      )}
+    </div>
   );
 }

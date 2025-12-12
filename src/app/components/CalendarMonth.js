@@ -1,4 +1,5 @@
-// components/CalendarMonth.jsx
+"use client";
+
 import React from "react";
 import DateCell from "./DateCell";
 import {
@@ -6,99 +7,90 @@ import {
   getDay,
   getDaysInMonth,
   isSameDay,
-  parseISO,
 } from "date-fns";
 import "../../app/weekday_breakpoints.css";
 
 const weekdayLabels = [
-  { full: "Monday",    med: "Mon", short: "M" },
-  { full: "Tuesday",   med: "Tue", short: "T" },
+  { full: "Monday", med: "Mon", short: "M" },
+  { full: "Tuesday", med: "Tue", short: "T" },
   { full: "Wednesday", med: "Wed", short: "W" },
-  { full: "Thursday",  med: "Thu", short: "T" },
-  { full: "Friday",    med: "Fri", short: "F" },
-  { full: "Saturday",  med: "Sat", short: "S" },
-  { full: "Sunday",    med: "Sun", short: "S" },
+  { full: "Thursday", med: "Thu", short: "T" },
+  { full: "Friday", med: "Fri", short: "F" },
+  { full: "Saturday", med: "Sat", short: "S" },
+  { full: "Sunday", med: "Sun", short: "S" },
 ];
 
+// Room colors
+const roomColors = {
+  "Conference A": "bg-blue-400",
+  "Conference B": "bg-green-400",
+  "Meeting A": "bg-purple-400",
+  "Meeting B": "bg-yellow-400",
+};
 
-/**
- * CalendarMonth
- * Props:
- *  - month: number (1-12)
- *  - today: Date | string (optional) — will be normalized
- *
- * Renders a grid with Monday..Sunday headers and the month days,
- * with the correct number of leading empty slots so the 1st of the month
- * lines up under the right weekday (assuming Monday is the first column).
- */
-export default function CalendarMonth({ month, today }) {
-  // Validate/normalize month (expect 1-12)
-  const monthNum = Math.max(1, Math.min(12, Number(month || new Date().getMonth() + 1)));
-
-  // Normalize "today" into a Date object (accepts Date or ISO string)
-  let todayDate;
-  if (!today) {
-    todayDate = new Date();
-  } else if (typeof today === "string") {
-    // If string, try ISO parse; fallback to Date constructor
-    try {
-      todayDate = parseISO(today);
-      if (Number.isNaN(todayDate.getTime())) throw new Error("invalid");
-    } catch {
-      todayDate = new Date(today);
-    }
-  } else {
-    todayDate = new Date(today);
-  }
-
+export default function CalendarMonth({
+  month,
+  today,
+  bookings = [],
+  onSelectDate,
+}) {
   const currentYear = new Date().getFullYear();
+  const monthStart = startOfMonth(new Date(currentYear, month - 1, 1));
 
-  // startOfMonth for the target month/year
-  const monthStart = startOfMonth(new Date(currentYear, monthNum - 1, 1));
-
-  // JS/getDay: 0 = Sunday, 1 = Monday, ... 6 = Saturday
-  // We want Monday to be column 0. Compute how many leading empty cells:
-  // map Sunday(0) -> 6, Monday(1) -> 0, Tuesday(2) -> 1, ...
   const weekdayOfFirst = getDay(monthStart);
   const leadingEmptyCount = (weekdayOfFirst + 6) % 7;
-
-  // number of days in this month
   const daysInMonth = getDaysInMonth(monthStart);
 
-  // render
-  return (
-    <div className="calendar-container mx-4 grid grid-cols-7 gap-4 [&>*]:text-center [&>*]:shadow-2xl">
+  const getBookingsForDay = (date) =>
+    bookings.filter((b) => isSameDay(new Date(b.date), date));
 
-      {/* weekday headers */}
-      {weekdayLabels.map((w, i) => (
-        <div key={i} className="font-bold">
+  const handleClick = (date) => {
+    onSelectDate(date);
+  };
+
+  return (
+    <div className="calendar-container grid grid-cols-7 gap-2">
+      {/* Weekday headers */}
+      {weekdayLabels.map((w) => (
+        <div key={w.full} className="text-center font-semibold text-black">
           <span className="weekday-full">{w.full}</span>
           <span className="weekday-med">{w.med}</span>
           <span className="weekday-short">{w.short}</span>
         </div>
       ))}
 
-      {/* leading empty slots */}
-      {Array.from({ length: leadingEmptyCount }).map((_, idx) => (
-        <div key={`empty-${idx}`} aria-hidden className="h-12" />
+      {/* Leading empty cells */}
+      {Array.from({ length: leadingEmptyCount }).map((_, i) => (
+        <div key={i}></div>
       ))}
 
-      {/* day cells */}
-      {Array.from({ length: daysInMonth }).map((_, idx) => {
-        const day = idx + 1;
-        const cellDate = new Date(currentYear, monthNum - 1, day);
-
-        const isToday = isSameDay(cellDate, todayDate);
+      {/* Days */}
+      {Array.from({ length: daysInMonth }).map((_, i) => {
+        const dayNum = i + 1;
+        const dateObj = new Date(currentYear, month - 1, dayNum);
+        const dayBookings = getBookingsForDay(dateObj);
 
         return (
-          <DateCell
-            key={`d-${day}`}
-            shortDate={day}
-            fullDate={cellDate}
-            isToday={isToday}
-            // optionally pass a full date if DateCell can use it:
-            // dateObj={cellDate}
-          />
+          <div key={i} className="relative">
+            <DateCell
+              fullDate={dateObj}
+              shortDate={dayNum}
+              isToday={isSameDay(dateObj, today)}
+              onClick={() => handleClick(dateObj)}
+            />
+            {/* Booking badges */}
+            <div className="absolute top-0 left-0 w-full h-full p-1 flex flex-col gap-0.5">
+              {dayBookings.map((b, index) => (
+                <div
+                  key={index}
+                  className={`text-xs truncate rounded px-1 ${roomColors[b.room] || "bg-red-500"} text-white`}
+                  title={b.userIsOwner ? `${b.room}: ${b.title}` : b.room}
+                >
+                  {b.userIsOwner ? b.title : b.room}
+                </div>
+              ))}
+            </div>
+          </div>
         );
       })}
     </div>
