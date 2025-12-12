@@ -7,6 +7,8 @@ import WeeklyView from "./components/WeeklyView";
 import BookingFormModal from "./components/BookingFormModal";
 import { subWeeks, addWeeks } from "date-fns";
 
+
+
 export default function HomePage({ bookings }) {
   const today = new Date();
   const [weekStart, setWeekStart] = useState(today);
@@ -18,6 +20,15 @@ export default function HomePage({ bookings }) {
 
   const handlePrevWeek = () => setWeekStart(subWeeks(weekStart, 1));
   const handleNextWeek = () => setWeekStart(addWeeks(weekStart, 1));
+
+  // const [user, setUser] = useState(null);
+  
+  // useEffect(() => {
+  //     fetch("/api/get-user")
+  //       .then(res => res.json())
+  //       .then(data => setUser(data));
+  // }, []);
+
 
   const handleSlotClick = (date, startIndex = null) => {
     if (!isSignedIn) {
