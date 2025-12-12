@@ -59,4 +59,28 @@ export default function BookingsPage() {
       {msg && <p>{msg}</p>}
     </form>
   );
+
+  async function updateBooking(bookingId) {
+    setMsg("");
+
+    const res = await fetch("/api/bookings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: bookingId,
+        start_time: new Date(startTime).toISOString(),
+        end_time: new Date(endTime).toISOString(),
+        purpose,
+        room_id: Number(roomId),
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      setMsg(json.error || "Failed to update booking");
+      return;
+    }
+
+    setMsg("✅ Booking updated!");
+  }
 }
