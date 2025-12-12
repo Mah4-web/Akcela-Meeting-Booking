@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@/components/utils/dbConnection";
+import { supabase } from "@/lib/supabaseClient";
 
-export async function POST(req) {
+export async function DELETE(req) {
   const { sessionClaims } = auth();
 
   if (sessionClaims?.publicMetadata?.role !== "admin") {
@@ -10,7 +10,14 @@ export async function POST(req) {
 
   const { bookingId } = await req.json();
 
-  await db.query("DELETE FROM bookings WHERE id = $1", [bookingId]);
+  const { error } = await supabase
+    .from("bookings")
+    .delete()
+    .eq("id", bookingId);
+
+  if (error) {
+    return new Response("Failed to delete booking", { status: 500 });
+  }
 
   return new Response("OK");
 }
