@@ -45,7 +45,7 @@ export default function BookingFormModal({ booking, onClose, onSave, user, booki
       (b) =>
         index >= b.startIndex &&
         index <= b.endIndex &&
-        (!booking || b.id !== booking.id) // ignore current booking
+        (!booking || b.id !== booking.id) // ignore current booking if editing
     );
 
   const isSlotSelected = (index) =>

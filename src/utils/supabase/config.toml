@@ -1,0 +1,5 @@
+[auth.third_party.clerk]
+
+enabled = true
+
+domain = "https://fluent-duck-5.clerk.accounts.dev"
