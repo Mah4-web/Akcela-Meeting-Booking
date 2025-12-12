@@ -15,12 +15,13 @@ const ROOM_COLORS = {
   "Meeting B": "bg-pink-400",
 };
 
+// Generate all slots in a day
 function generateSlots() {
   const slots = [];
   let index = 0;
-  for (let hour = START_HOUR; hour < END_HOUR; hour++) {
+  for (let h = START_HOUR; h < END_HOUR; h++) {
     for (let m = 0; m < 60; m += SLOT_INTERVAL_MINUTES) {
-      const hh = String(hour).padStart(2, "0");
+      const hh = String(h).padStart(2, "0");
       const mm = String(m).padStart(2, "0");
       slots.push({ index, label: `${hh}:${mm}` });
       index++;
@@ -31,12 +32,20 @@ function generateSlots() {
 
 const allSlots = generateSlots();
 
-export default function BookingFormModal({ booking, onClose, onSave, user, bookings, date }) {
+export default function BookingFormModal({
+  booking = null,
+  bookings = [],
+  onClose,
+  onSave,
+  user,
+  date,
+}) {
   const [selectedRange, setSelectedRange] = useState(
     booking ? { startIndex: booking.startIndex, endIndex: booking.endIndex } : null
   );
   const [customerName, setCustomerName] = useState(booking?.customerName || "");
   const [room, setRoom] = useState(booking?.room || "Conference A");
+  const [purpose, setPurpose] = useState(booking?.purpose || "");
   const [message, setMessage] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -45,7 +54,7 @@ export default function BookingFormModal({ booking, onClose, onSave, user, booki
       (b) =>
         index >= b.startIndex &&
         index <= b.endIndex &&
-        (!booking || b.id !== booking.id) // ignore current booking
+        (!booking || b.id !== booking.id) // ignore current booking if editing
     );
 
   const isSlotSelected = (index) =>
@@ -62,7 +71,7 @@ export default function BookingFormModal({ booking, onClose, onSave, user, booki
     setMessage(null);
 
     if (isSlotBooked(slotIndex)) {
-      setMessage({ type: "error", text: "That time is already booked." });
+      setMessage({ type: "error", text: "This time is already booked." });
       return;
     }
 
@@ -81,7 +90,7 @@ export default function BookingFormModal({ booking, onClose, onSave, user, booki
     }
 
     if (!isRangeAvailable(newStart, newEnd)) {
-      setMessage({ type: "error", text: "Selection overlaps with existing booking." });
+      setMessage({ type: "error", text: "Selection overlaps with another booking." });
       return;
     }
 
@@ -91,20 +100,18 @@ export default function BookingFormModal({ booking, onClose, onSave, user, booki
   const handleSave = async () => {
     setMessage(null);
 
-    if (!customerName.trim()) {
-      setMessage({ type: "error", text: "Please enter your name." });
+    if (!customerName.trim() || !purpose.trim()) {
+      setMessage({ type: "error", text: "Please enter your name and purpose." });
       return;
     }
 
     if (!selectedRange) {
-      setMessage({ type: "error", text: "Please select at least one slot." });
+      setMessage({ type: "error", text: "Please select at least one time slot." });
       return;
     }
 
-    const { startIndex, endIndex } = selectedRange;
-
-    if (!isRangeAvailable(startIndex, endIndex)) {
-      setMessage({ type: "error", text: "Selection overlaps with existing booking." });
+    if (!isRangeAvailable(selectedRange.startIndex, selectedRange.endIndex)) {
+      setMessage({ type: "error", text: "Selected slots overlap with another booking." });
       return;
     }
 
@@ -112,10 +119,11 @@ export default function BookingFormModal({ booking, onClose, onSave, user, booki
     try {
       const payload = {
         date,
-        startIndex,
-        endIndex,
+        startIndex: selectedRange.startIndex,
+        endIndex: selectedRange.endIndex,
         customerName: customerName.trim(),
         room,
+        purpose: purpose.trim(),
         bookingId: booking?.id,
       };
 
@@ -131,20 +139,19 @@ export default function BookingFormModal({ booking, onClose, onSave, user, booki
       onSave(data.booking);
       onClose();
     } catch (err) {
-      console.error(err);
       setMessage({ type: "error", text: err.message });
     } finally {
       setSaving(false);
     }
   };
 
-  const currentDurationMinutes = useMemo(() => {
+  const currentDuration = useMemo(() => {
     if (!selectedRange) return 0;
     return (selectedRange.endIndex - selectedRange.startIndex + 1) * SLOT_INTERVAL_MINUTES;
   }, [selectedRange]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-(--color-glass-bg) p-6 rounded-2xl shadow-glass backdrop-blur-md min-w-[350px] max-w-md">
         <h2 className="text-xl font-bold text-black mb-2">
           {booking ? "Edit Booking" : "New Booking"}
@@ -157,6 +164,16 @@ export default function BookingFormModal({ booking, onClose, onSave, user, booki
             className="w-full rounded border border-(--color-glass-border) p-1 mt-1"
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
+          />
+        </label>
+
+        <label className="block mb-2 text-black">
+          Purpose:
+          <input
+            type="text"
+            className="w-full rounded border border-(--color-glass-border) p-1 mt-1"
+            value={purpose}
+            onChange={(e) => setPurpose(e.target.value)}
           />
         </label>
 
@@ -174,7 +191,7 @@ export default function BookingFormModal({ booking, onClose, onSave, user, booki
         </label>
 
         <div className="text-sm mb-2 text-black">
-          Selected duration: {currentDurationMinutes} minutes
+          Selected duration: {currentDuration} minutes
         </div>
 
         <div className="grid grid-cols-6 gap-1 max-h-64 overflow-y-auto mb-4">
@@ -184,7 +201,11 @@ export default function BookingFormModal({ booking, onClose, onSave, user, booki
             return (
               <button
                 key={slot.index}
-                className={`text-xs p-1 rounded ${booked ? "bg-red-500 cursor-not-allowed" : selected ? "bg-blue-400" : "bg-(--color-glass-bg)"} border border-(--color-glass-border) text-black`}
+                className={`text-xs p-1 rounded border border-(--color-glass-border) ${
+                  booked ? "bg-red-500 cursor-not-allowed" :
+                  selected ? "bg-blue-400" :
+                  "bg-(--color-glass-bg)"
+                } text-black`}
                 disabled={booked}
                 onClick={() => handleSlotClick(slot.index)}
               >
