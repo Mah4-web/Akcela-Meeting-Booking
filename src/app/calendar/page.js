@@ -6,16 +6,32 @@ import DayView from "../components/DayView";
 import BookingFormModal from "../components/BookingFormModal"; // updated modal
 import { subWeeks, addWeeks, format } from "date-fns";
 
+import { useUser, SignedIn, SignedOut, SignInButton, SignOutButton } from "@clerk/nextjs";
+
 export default function CalendarPage() {
   const today = new Date();
   const [weekStart, setWeekStart] = useState(today);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  const { user, isSignedIn } = useUser();
 
   const handlePrevWeek = () => setWeekStart(subWeeks(weekStart, 1));
   const handleNextWeek = () => setWeekStart(addWeeks(weekStart, 1));
+
+  const handleSlotClick = (date, startIndex = null) => {
+    if (!isSignedIn) {
+      window.location.href = "/sign-in";
+      return;
+    }
+    setSelectedDate(date);
+    setSelectedBooking({ startIndex }); // optional prefill for weekly/day click
+    setModalOpen(true);
+  };
+
 
   const openBookingModal = (booking = null) => {
     setSelectedBooking(booking);
@@ -59,7 +75,7 @@ export default function CalendarPage() {
           onPrevWeek={handlePrevWeek}
           onNextWeek={handleNextWeek}
           bookings={sanitizedBookings}
-          onSlotClick={openBookingModal}
+          onSlotClick={handleSlotClick}
         />
       </div>
 
@@ -71,7 +87,7 @@ export default function CalendarPage() {
         <DayView
           date={today}
           bookings={sanitizedBookings}
-          onSlotClick={openBookingModal}
+                   onSlotClick={handleSlotClick}
         />
       </div>
 
@@ -79,6 +95,8 @@ export default function CalendarPage() {
       {modalOpen && (
         <BookingFormModal
           booking={selectedBooking}
+                date={selectedDate}
+           user={user}
           onClose={closeBookingModal}
           onSave={(newBooking) => {
             setBookings((prev) => {

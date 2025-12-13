@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
+import { headers } from "next/headers";
+
+
+export const runtime = "nodejs";
 
 // Initialize Supabase client (server-side)
 function getSupabase(token) {
   return createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       global: { headers: token ? { Authorization: `Bearer ${token}` } : {} },
     }
@@ -27,14 +31,24 @@ export async function POST(req) {
     return NextResponse.json({ error: "Missing room_id/start_time/end_time" }, { status: 400 });
   }
 
+  console.log('REQUEST BODY', body);
+  // console.log("HEADERS", headers().get("cookie"));
+
   // Get the logged-in user from Clerk session
-  const { userId, getToken } = auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+   const { userId, getToken } = await auth();
+  const token = await getToken({ template: "supabase" });
+
+
+if (!userId) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
 
   // Generate Supabase token for row-level security
-  const token = await getToken({ template: "supabase" });
+
+
+  // console.log('TOKEN', token);
+  // console.log('USER ID', userId);
+
   const supabase = getSupabase(token);
 
   // Insert booking with server-detected userId
@@ -42,11 +56,11 @@ export async function POST(req) {
     .from("bookings")
     .insert([{
       user_id: userId,
-      room_id,
-      start_time,
-      end_time,
-      purpose,
-      booked_by
+      room_id: room_id,
+      start_time: start_time,
+      end_time: end_time,
+      purpose: purpose,
+      booked_by: booked_by
     }])
     .select("*")
     .single();
@@ -56,6 +70,27 @@ export async function POST(req) {
   }
 
   return NextResponse.json({ booking: data });
+}
+
+export async function GET() {
+  
+  const { getToken } = await auth();
+
+  const token = await getToken({ template: "supabase" });
+  const supabase = getSupabase(token);
+
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*")
+    .order("start_time", { ascending: true });
+  if (error) {
+
+    return NextResponse.json({ error: error.message }, { status: 400 });
+
+  }
+
+  console.log("FETCHED BOOKINGS:", data);
+  return NextResponse.json({ bookings: data });
 }
 
 // Delete booking (admin-only via RLS policy)
