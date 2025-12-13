@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import WeeklyView from "../components/WeeklyView";
 import DayView from "../components/DayView";
-import BookingFormModal from "../components/BookingFormModal"; // updated modal
-import { subWeeks, addWeeks, format } from "date-fns";
+import MonthView from "../components/MonthlyView";
+import BookingFormModal from "../components/BookingFormModal";
+import CalendarHeader from "../components/CalendarHeader";
+import { subWeeks, addWeeks } from "date-fns";
+import { SignOutButton, useUser } from "@clerk/nextjs";
 
 import { useUser, SignedIn, SignedOut, SignInButton, SignOutButton } from "@clerk/nextjs";
 
@@ -16,6 +20,9 @@ export default function CalendarPage() {
   const [selectedBooking, setSelectedBooking] = useState(null);
     const [selectedDate, setSelectedDate] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [view, setView] = useState("week"); // default view is week
+
+  const { user } = useUser();
 
   const { user, isSignedIn } = useUser();
 
@@ -43,6 +50,7 @@ export default function CalendarPage() {
     setModalOpen(false);
   };
 
+
   useEffect(() => {
     async function loadBookings() {
       setLoading(true);
@@ -60,10 +68,9 @@ export default function CalendarPage() {
     loadBookings();
   }, []);
 
-  // Only show booked timeslots to guests, full details to logged-in users handled in modal
   const sanitizedBookings = bookings.map((b) => ({
     ...b,
-    customerName: b.customerName ? b.customerName : "Booked",
+    customerName: b.customerName ?? "Booked",
   }));
 
   return (
@@ -79,19 +86,64 @@ export default function CalendarPage() {
         />
       </div>
 
-      {/* Day View for selected day */}
-      <div className="w-full md:w-1/4 mb-6 md:mb-0">
-        <h1 className="text-center font-extrabold text-2xl mb-2 text-black">
-          Akcela Booking Calendar
+      {/* HEADER */}
+      <div className="flex justify-between items-center bg-white/40 border border-(--color-glass-border) shadow-lg backdrop-blur-md p-4 rounded-xl">
+        
+        {/* Title */}
+        <h1 className="text-2xl font-bold text-black cursor-pointer hover:text-blue-500 transition">
+          Akcela Meeting Booking
         </h1>
-        <DayView
-          date={today}
-          bookings={sanitizedBookings}
-                   onSlotClick={handleSlotClick}
+
+      
+        <CalendarHeader
+          currentDate={today}
+          view={view}
+          setView={setView}
         />
+
+        {/* Logout */}
+        {user && (
+          <SignOutButton>
+            <Link
+              href="/"
+              className="bg-(--color-glass-bg) backdrop-blur-md border border-(--color-glass-border) shadow-lg rounded-xl px-6 py-2 text-black font-semibold transition-all duration-500 hover:shadow-2xl hover:bg-blue-500 hover:-translate-y-1"
+            >
+              Logout
+            </Link>
+          </SignOutButton>
+        )}
       </div>
 
-      {/* Booking Modal */}
+      {/* FULL-WIDTH VIEW */}
+      <div className="w-full">
+
+        {view === "month" && (
+          <MonthView
+            bookings={sanitizedBookings}
+            user={{ id: user?.id }}
+          />
+        )}
+
+        {view === "week" && (
+          <WeeklyView
+            weekStart={weekStart}
+            onPrevWeek={handlePrevWeek}
+            onNextWeek={handleNextWeek}
+            bookings={sanitizedBookings}
+            onSlotClick={openBookingModal}
+          />
+        )}
+
+        {view === "day" && (
+          <DayView
+            date={today}
+            bookings={sanitizedBookings}
+            onSelectSlot={openBookingModal}
+          />
+        )}
+      </div>
+
+      {/* MODAL */}
       {modalOpen && (
         <BookingFormModal
           booking={selectedBooking}
@@ -115,9 +167,7 @@ export default function CalendarPage() {
       )}
 
       {loading && (
-        <div className="absolute top-4 right-4 p-2 bg-white/80 rounded shadow">
-          Loading bookings...
-        </div>
+        <div className="absolute top-4 right-4 p-2 bg-white/80 rounded shadow">Loading…</div>
       )}
     </main>
   );

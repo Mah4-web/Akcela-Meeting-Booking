@@ -1,31 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { format, startOfWeek, addDays } from "date-fns";
-
-export default function CalendarHeader({ view, setView, currentDate }) {
-  // fallback to today if currentDate is invalid
-  const date = currentDate instanceof Date ? currentDate : new Date();
-
-  const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-  const weekEnd = addDays(weekStart, 6);
-
+export default function CalendarHeader({ currentDate, view, setView }) {
   return (
-    <div className="flex justify-between items-center mb-4">
-      <h1 className="text-3xl font-bold">
-        {view === "week"
-          ? `${format(weekStart, "d MMM")} – ${format(weekEnd, "d MMM")}`
-          : format(date, "MMMM yyyy")}
-      </h1>
+    <div className="flex flex-col items-center mb-6">
+      <h2 className="text-2xl md:text-3xl font-bold text-black mb-2 hover:text-blue-500 cursor-pointer transition-colors duration-300">
+        {currentDate.toDateString()}
+      </h2>
 
       <select
         value={view}
         onChange={(e) => setView(e.target.value)}
-        className="border rounded px-2 py-1"
+        className="btn-glass px-4 py-2 rounded-xl text-black font-semibold transition-all duration-300 hover:shadow-xl"
       >
-        <option value="day">Day</option>
-        <option value="week">Week</option>
-        <option value="month">Month</option>
+        <option value="day">Day View</option>
+        <option value="week">Week View</option>
+        <option value="month">Month View</option>
       </select>
     </div>
   );
