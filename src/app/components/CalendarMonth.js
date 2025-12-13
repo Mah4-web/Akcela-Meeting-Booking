@@ -15,7 +15,7 @@ const weekdayLabels = [
   { full: "Sunday", med: "Sun", short: "S" },
 ];
 
-export default function CalendarMonth({ month, today, bookings = [], userId, onSelectDate }) {
+export default function CalendarMonth({ month, today, isSignedIn = false, bookings = [], userId, onSelectDate }) {
   const currentYear = new Date().getFullYear();
   const monthStart = startOfMonth(new Date(currentYear, month - 1, 1));
 
@@ -57,6 +57,7 @@ export default function CalendarMonth({ month, today, bookings = [], userId, onS
             <DateCell
               fullDate={dateObj}
               shortDate={dayNum}
+              isSignedIn={isSignedIn}
               isToday={isSameDay(dateObj, today)}
               bookings={dayBookings}
               userId={userId}

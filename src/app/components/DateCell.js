@@ -1,6 +1,6 @@
 "use client";
 
-export default function DateCell({ shortDate, isToday, bookings = [], userId, onClick }) {
+export default function DateCell({ shortDate, isToday, isSignedIn, bookings = [], userId, onClick }) {
   return (
     <div
       onClick={onClick}
@@ -25,9 +25,9 @@ export default function DateCell({ shortDate, isToday, bookings = [], userId, on
             <div
               key={i}
               className={`text-xs truncate rounded px-1 text-white ${b.roomColor || "bg-red-500"}`}
-              title={canSee ? `${b.customerName} (${b.room})` : `Booked (${b.room})`}
+              title={canSee && isSignedIn ? `${b.customerName} (${b.room})` : `Booked (${b.room})`}
             >
-              {canSee ? `${b.customerName}` : b.room}
+              {canSee && isSignedIn ? `${b.customerName}` : b.room}
             </div>
           );
         })}

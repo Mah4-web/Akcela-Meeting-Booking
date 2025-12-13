@@ -8,7 +8,6 @@ import MonthView from "../components/MonthlyView";
 import BookingFormModal from "../components/BookingFormModal";
 import CalendarHeader from "../components/CalendarHeader";
 import { subWeeks, addWeeks } from "date-fns";
-import { SignOutButton, useUser } from "@clerk/nextjs";
 
 import { useUser, SignedIn, SignedOut, SignInButton, SignOutButton } from "@clerk/nextjs";
 
@@ -21,8 +20,6 @@ export default function CalendarPage() {
     const [selectedDate, setSelectedDate] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [view, setView] = useState("week"); // default view is week
-
-  const { user } = useUser();
 
   const { user, isSignedIn } = useUser();
 
@@ -74,17 +71,7 @@ export default function CalendarPage() {
   }));
 
   return (
-    <main className="flex flex-col md:flex-row p-4 md:p-8 gap-6 bg-(--color-gray-light) min-h-screen">
-      {/* Weekly View */}
-      <div className="flex-1">
-        <WeeklyView
-          weekStart={weekStart}
-          onPrevWeek={handlePrevWeek}
-          onNextWeek={handleNextWeek}
-          bookings={sanitizedBookings}
-          onSlotClick={handleSlotClick}
-        />
-      </div>
+    <main className="p-6 bg-(--color-gray-light) min-h-screen flex flex-col gap-6">
 
       {/* HEADER */}
       <div className="flex justify-between items-center bg-white/40 border border-(--color-glass-border) shadow-lg backdrop-blur-md p-4 rounded-xl">
@@ -119,7 +106,7 @@ export default function CalendarPage() {
 
         {view === "month" && (
           <MonthView
-            bookings={sanitizedBookings}
+            bookings={bookings}
             user={{ id: user?.id }}
           />
         )}
@@ -129,16 +116,16 @@ export default function CalendarPage() {
             weekStart={weekStart}
             onPrevWeek={handlePrevWeek}
             onNextWeek={handleNextWeek}
-            bookings={sanitizedBookings}
-            onSlotClick={openBookingModal}
+            bookings={bookings}
+            onSlotClick={handleSlotClick}
           />
         )}
 
         {view === "day" && (
           <DayView
             date={today}
-            bookings={sanitizedBookings}
-            onSelectSlot={openBookingModal}
+            bookings={bookings}
+            onSelectSlot={handleSlotClick}
           />
         )}
       </div>

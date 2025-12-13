@@ -34,7 +34,7 @@ export async function POST(req) {
     );
   }
 
-  console.log('REQUEST BODY', body);
+  // console.log('REQUEST BODY', body);
   // console.log("HEADERS", headers().get("cookie"));
 
   // Get the logged-in user from Clerk session
