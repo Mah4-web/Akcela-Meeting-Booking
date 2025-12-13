@@ -7,6 +7,7 @@ import WeeklyView from "./components/WeeklyView";
 import BookingModal from "./components/BookingModal";
 import SigningModal from "./components/SigningModal"; // our sign-in/sign-up popup
 import { subWeeks, addWeeks } from "date-fns";
+import CalendarHeader from "./components/CalendarHeader";
 
 
 
@@ -20,6 +21,7 @@ export default function HomePage({ bookings }) {
   const [selectedDate, setSelectedDate] = useState(null);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [signingModalOpen, setSigningModalOpen] = useState(false);
+  const [view, setView] = useState("week"); // default view is week
 
   const { user, isSignedIn } = useUser();
 
@@ -56,14 +58,25 @@ export default function HomePage({ bookings }) {
         <div className="flex justify-between items-center mb-4">
           <h1 className="font-extrabold text-2xl text-black hover:text-blue-500 cursor-pointer transition-colors">
             Akcela Booking Calendar
+           
           </h1>
 
+            {/* <CalendarHeader
+                    currentDate={today}
+                    view={view}
+                    setView={setView}
+                  /> */}
+
           {/* Logout button only shows after signing in */}
-          {user && (
+          {isSignedIn ? 
             <SignOutButton>
               <button className="btn-glass">Logout</button>
             </SignOutButton>
-          )}
+            :
+             
+             <></>
+          
+          }
         </div>
 
         <p className="text-center mb-4 text-(--color-gray-dark)">
@@ -83,6 +96,7 @@ export default function HomePage({ bookings }) {
           <CalendarMonth
             month={today.getMonth() + 1}
             today={today}
+            isSignedIn={isSignedIn}
             bookings={bookings}
             userId={user?.id}
             onSelectDate={handleSlotClick}
@@ -96,6 +110,8 @@ export default function HomePage({ bookings }) {
              {bookingsLoading ?
         <WeeklyView
           weekStart={weekStart}
+          isSignedIn={isSignedIn}
+          bookings={bookings}
           onPrevWeek={handlePrevWeek}
           onNextWeek={handleNextWeek}
           onSlotClick={handleSlotClick}
@@ -103,6 +119,7 @@ export default function HomePage({ bookings }) {
         :
         <WeeklyView
           weekStart={weekStart}
+          isSignedIn={isSignedIn}
           bookings={loadedBookings}
           onPrevWeek={handlePrevWeek}
           onNextWeek={handleNextWeek}
@@ -112,15 +129,19 @@ export default function HomePage({ bookings }) {
              }
       </div>
 
+       {/* Sign-In / Sign-Up Modal */}
+      {signingModalOpen && (
+        <SigningModal onClose={() => setSigningModalOpen(false)} />
+      )}
+
       {/* Booking Form Modal */}
       {bookingModalOpen ? 
        bookingsLoading ? 
         <BookingFormModal
           booking={selectedBooking}
           date={selectedDate}
-          onClose={() => setBookingModalOpen(false)}
           user={user}
-                 bookings={bookings}
+          bookings={bookings}
           onClose={() => setModalOpen(false)}
           onSave={() => setModalOpen(false)}
         />

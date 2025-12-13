@@ -11,6 +11,13 @@ import {
 } from "date-fns";
 import BookingModal from "./BookingModal";
 
+const ROOM_VALUES = {
+  "1": "Conference A",
+  "2": "Conference B",
+  "3": "Meeting A",
+  "4": "Meeting B",
+}
+
 const ROOM_COLORS = {
   "Conference A": "bg-blue-400",
   "Conference B": "bg-green-400",
@@ -41,7 +48,7 @@ export default function MonthView({ bookings = [], user }) {
   const bookingsByDay = useMemo(() => {
     const map = {};
     bookings.forEach((b) => {
-      const dateKey = format(new Date(b.date), "yyyy-MM-dd");
+      const dateKey = format(new Date(b.start_time), "yyyy-MM-dd");
       if (!map[dateKey]) map[dateKey] = [];
       map[dateKey].push(b);
     });
@@ -121,7 +128,7 @@ export default function MonthView({ bookings = [], user }) {
                       onClick={() => handleOpenModal(b)}
                       title={showDetails ? `${b.customerName} - ${b.purpose}` : "Booked"}
                     >
-                      {b.room}
+                      {b.purpose}: {b.start_time} - {b.end_time}
                     </div>
                   );
                 })}

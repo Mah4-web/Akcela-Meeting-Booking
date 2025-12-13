@@ -34,7 +34,7 @@ export async function POST(req) {
     );
   }
 
-  console.log('REQUEST BODY', body);
+  // console.log('REQUEST BODY', body);
   // console.log("HEADERS", headers().get("cookie"));
 
   // Get the logged-in user from Clerk session
@@ -80,7 +80,7 @@ export async function GET() {
   const { getToken } = await auth();
 
   const token = await getToken({ template: "supabase" });
-  const supabase = getSupabase(token);
+  const supabase = await getSupabase(token);
 
   const { data, error } = await supabase
     .from("bookings")

@@ -349,6 +349,7 @@ export default function BookingFormModal({
           </div>
 
           <div>
+            {/* <p>Maximum booking time is 2 hours, with up to eight 15 minute slots.</p> */}
             <div className="text-sm text-black mb-2">
               Selected duration: <span className="font-medium">{currentDurationMinutes} minutes</span>
             </div>
