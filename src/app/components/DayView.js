@@ -1,57 +1,60 @@
 "use client";
 
-import { format } from "date-fns";
+import { format, addMinutes } from "date-fns";
 
-export default function DayView({ date, bookings, onSelectSlot }) {
-  const START = 8;
-  const END = 20;
-  const INTERVAL = 15;
+export default function DayView({ date, bookings = [], onSelectSlot }) {
+  const START_HOUR = 8;
+  const END_HOUR = 20;
+  const INTERVAL = 15; // minutes
 
   const slots = [];
-  for (let h = START; h <= END; h++) {
+  for (let h = START_HOUR; h <= END_HOUR; h++) {
     for (let m = 0; m < 60; m += INTERVAL) {
       slots.push({ h, m });
     }
   }
 
+  const isBooked = (slotMinutes) => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    return bookings.some(
+      (b) =>
+        b.date === dateStr &&
+        slotMinutes >= b.start_minutes &&
+        slotMinutes < b.end_minutes
+    );
+  };
+
   return (
-    <div className="px-6 py-4 w-full">
+    <div className="p-4 bg-(--color-glass-bg) border border-(--color-glass-border) rounded-2xl shadow-glass backdrop-blur-md">
+      <h3 className="text-xl font-semibold text-center mb-4 text-black">
+        {format(date, "EEEE, MMMM do")}
+      </h3>
 
-      <h2 className="text-2xl font-semibold mb-4">
-        {format(date, "EEEE, MMMM d")}
-      </h2>
-
-      <div className="grid grid-cols-6 gap-2">
-        {/* time column */}
-        <div className="col-span-1 flex flex-col gap-3">
-          {slots.map((s, i) => (
-            <div key={i} className="text-gray-500 text-sm">
-              {format(new Date(2025, 0, 1, s.h, s.m), "HH:mm")}
+      <div className="grid grid-cols-[60px_1fr] gap-2">
+        {/* Time column */}
+        <div className="flex flex-col gap-2 text-gray-700 text-sm">
+          {slots.map((s, idx) => (
+            <div key={idx} className="text-center">
+              {format(new Date(date.getFullYear(), date.getMonth(), date.getDate(), s.h, s.m), "HH:mm")}
             </div>
           ))}
         </div>
 
-        {/* main timeline */}
-        <div className="col-span-5 flex flex-col gap-3">
+        {/* Slot column */}
+        <div className="flex flex-col gap-2">
           {slots.map((s, idx) => {
             const minutes = s.h * 60 + s.m;
-            const isBooked = bookings.some(
-              (b) =>
-                b.date === format(date, "yyyy-MM-dd") &&
-                minutes >= b.start_minutes &&
-                minutes < b.end_minutes
-            );
+            const booked = isBooked(minutes);
 
             return (
               <button
                 key={idx}
-                onClick={() =>
-                  onSelectSlot(date, new Date(date.getFullYear(), date.getMonth(), date.getDate(), s.h, s.m))
-                }
-                className={`h-14 rounded-xl shadow-sm bg-white transition ${
-                  isBooked ? "bg-blue-200 cursor-not-allowed" : "hover:bg-blue-50"
-                }`}
-              ></button>
+                onClick={() => !booked && onSelectSlot(date)}
+                className={`
+                  h-10 rounded-lg shadow-md transition
+                  ${booked ? "bg-red-500 cursor-not-allowed text-white" : "bg-[rgba(255,255,255,0.2)] hover:bg-blue-50 hover:shadow-xl"}
+                `}
+              />
             );
           })}
         </div>

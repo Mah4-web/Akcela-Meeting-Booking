@@ -24,7 +24,9 @@ export default function CalendarMonth({ month, today, bookings = [], userId, onS
   const daysInMonth = getDaysInMonth(monthStart);
 
   const getBookingsForDay = (date) =>
-    bookings.filter((b) => isSameDay(new Date(b.date), date));
+  Array.isArray(bookings)
+    ? bookings.filter((b) => isSameDay(new Date(b.start_time), date))
+    : [];
 
   const handleClick = (date) => onSelectDate(date);
 

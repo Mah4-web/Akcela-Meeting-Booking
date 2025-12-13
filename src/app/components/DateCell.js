@@ -3,12 +3,21 @@
 export default function DateCell({ shortDate, isToday, bookings = [], userId, onClick }) {
   return (
     <div
-      className={`p-2 rounded-lg shadow-md border border-(--color-glass-border) backdrop-blur-md transition cursor-pointer`}
       onClick={onClick}
+      className={`p-2 rounded-lg shadow-md border border-(--color-glass-border) backdrop-blur-md transition-colors cursor-pointer
+        hover:bg-blue-200
+      `}
     >
-      <div className={`text-center ${isToday ? "bg-black text-white" : "bg-white/20"} rounded`}>
+      <div
+        className={`text-center rounded transition-colors ${
+          isToday
+            ? "bg-black text-white hover:bg-blue-500"
+            : "bg-white/20 hover:bg-blue-500"
+        }`}
+      >
         {shortDate}
       </div>
+
       <div className="mt-1 flex flex-col gap-1">
         {bookings.map((b, i) => {
           const canSee = b.userId === userId;
