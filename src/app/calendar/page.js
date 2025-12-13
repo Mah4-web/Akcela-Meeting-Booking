@@ -116,6 +116,7 @@ export default function CalendarPage() {
             weekStart={weekStart}
             onPrevWeek={handlePrevWeek}
             onNextWeek={handleNextWeek}
+            isSignedIn={isSignedIn}
             bookings={bookings}
             onSlotClick={handleSlotClick}
           />

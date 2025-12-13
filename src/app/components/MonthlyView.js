@@ -11,6 +11,13 @@ import {
 } from "date-fns";
 import BookingModal from "./BookingModal";
 
+const ROOM_VALUES = {
+  "1": "Conference A",
+  "2": "Conference B",
+  "3": "Meeting A",
+  "4": "Meeting B",
+}
+
 const ROOM_COLORS = {
   "Conference A": "bg-blue-400",
   "Conference B": "bg-green-400",

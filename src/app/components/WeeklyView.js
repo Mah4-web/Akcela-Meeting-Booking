@@ -8,10 +8,10 @@ const START_HOUR = 8;
 const END_HOUR = 24;
 
 const ROOM_VALUES = {
-  "1": "Conference A",
-  "2": "Conference B",
-  "3": "Meeting A",
-  "4": "Meeting B",
+  1: "Conference A",
+  2: "Conference B",
+  3: "Meeting A",
+  4: "Meeting B",
 }
 
 const ROOM_COLORS = {
@@ -24,6 +24,7 @@ const ROOM_COLORS = {
 export default function WeeklyView({
   weekStart,
   bookings = [],
+  isSignedIn,
   onPrevWeek,
   onNextWeek,
   onSlotClick,
@@ -58,22 +59,66 @@ export default function WeeklyView({
 
   // Check if a slot is booked
 const getBookingAtSlot = (dayIndex, slotIndex) => {
+  // Guard against invalid indices
+  if (!days[dayIndex]) return null;
+  if (slotIndex < 0 || slotIndex >= HOURS.length) return null;
+
   const day = days[dayIndex];
-  const slotMinutes = START_HOUR * 60 + slotIndex * SLOT_INTERVAL_MINUTES;
+
+  // Slot start in minutes since midnight (UTC)
+  const slotMinutes =
+    START_HOUR * 60 + slotIndex * SLOT_INTERVAL_MINUTES;
+
+  // Visible grid bounds in minutes
+  const gridStartMinutes = START_HOUR * 60;
+  const gridEndMinutes = END_HOUR * 60;
 
   return bookings.find((b) => {
+    if (!b?.start_time || !b?.end_time) return false;
+
     const startDate = new Date(b.start_time.replace("+00:00", "Z"));
     const endDate = new Date(b.end_time.replace("+00:00", "Z"));
 
-    // Compare using UTC to match booking times
-    if (format(startDate, "yyyy-MM-dd") !== format(day, "yyyy-MM-dd")) return false;
+    if (Number.isNaN(startDate) || Number.isNaN(endDate)) return false;
 
-    const bookingStartMinutes = startDate.getUTCHours() * 60 + startDate.getUTCMinutes();
-    const bookingEndMinutes = endDate.getUTCHours() * 60 + endDate.getUTCMinutes();
+    // Must be same calendar day (UTC)
+    if (
+      format(startDate, "yyyy-MM-dd") !==
+      format(day, "yyyy-MM-dd")
+    ) {
+      return false;
+    }
 
-    return slotMinutes >= bookingStartMinutes && slotMinutes < bookingEndMinutes;
+    // Booking start/end in minutes (UTC)
+    let bookingStartMinutes =
+      startDate.getUTCHours() * 60 +
+      startDate.getUTCMinutes();
+
+    let bookingEndMinutes =
+      endDate.getUTCHours() * 60 +
+      endDate.getUTCMinutes();
+
+    // Clamp booking to visible grid range
+    bookingStartMinutes = Math.max(
+      bookingStartMinutes,
+      gridStartMinutes
+    );
+    bookingEndMinutes = Math.min(
+      bookingEndMinutes,
+      gridEndMinutes
+    );
+
+    // If booking does not intersect grid at all
+    if (bookingStartMinutes >= bookingEndMinutes) return false;
+
+    // Slot is inside booking range
+    return (
+      slotMinutes >= bookingStartMinutes &&
+      slotMinutes < bookingEndMinutes
+    );
   });
 };
+
 
 
 
@@ -127,14 +172,29 @@ const getBookingAtSlot = (dayIndex, slotIndex) => {
                   onClick={() => onSlotClick(day, slotIndex)}
                   className={`h-10 m-0.5 rounded-md text-xs text-center transition shadow-md shadow-black/20
                     ${
-                      isBooked
-                        ? `${ROOM_COLORS[ROOM_VALUES[booking.room_id]] || "bg-red-500"} text-white cursor-not-allowed`
+                      isBooked && isSignedIn
+                        ? `${ROOM_COLORS[ROOM_VALUES[booking.room_id]] ?? "bg-red-500"} text-white cursor-not-allowed`
+                        : isBooked
+                        ? "bg-red-500 text-white cursor-not-allowed"
                         : "bg-[rgba(255,255,255,0.2)] hover:bg-blue-500 hover:shadow-xl"
                     }`}
-                  title={isBooked ? booking.booked_by ?? booking.room : "Available"}>
-
-                      <p>{isBooked ? `${booking.purpose}` : "Available"}</p>
+                  title={
+                    isBooked && isSignedIn
+                      ? booking.booked_by ?? "Booked"
+                      : isBooked
+                      ? "Booked"
+                      : "Available"
+                  }
+                >
+                  <p>
+                    {isBooked && isSignedIn
+                      ? booking.purpose
+                      : isBooked
+                      ? "Booked"
+                      : "Available"}
+                  </p>
                 </button>
+
               );
             })}
           </React.Fragment>

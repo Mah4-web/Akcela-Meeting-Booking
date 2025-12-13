@@ -74,7 +74,7 @@ export default function HomePage({ bookings }) {
             </SignOutButton>
             :
              
-              <SignInButton />
+             <></>
           
           }
         </div>
@@ -110,6 +110,8 @@ export default function HomePage({ bookings }) {
              {bookingsLoading ?
         <WeeklyView
           weekStart={weekStart}
+          isSignedIn={isSignedIn}
+          bookings={bookings}
           onPrevWeek={handlePrevWeek}
           onNextWeek={handleNextWeek}
           onSlotClick={handleSlotClick}
@@ -117,6 +119,7 @@ export default function HomePage({ bookings }) {
         :
         <WeeklyView
           weekStart={weekStart}
+          isSignedIn={isSignedIn}
           bookings={loadedBookings}
           onPrevWeek={handlePrevWeek}
           onNextWeek={handleNextWeek}
@@ -137,9 +140,8 @@ export default function HomePage({ bookings }) {
         <BookingFormModal
           booking={selectedBooking}
           date={selectedDate}
-          onClose={() => setBookingModalOpen(false)}
           user={user}
-                 bookings={bookings}
+          bookings={bookings}
           onClose={() => setModalOpen(false)}
           onSave={() => setModalOpen(false)}
         />
