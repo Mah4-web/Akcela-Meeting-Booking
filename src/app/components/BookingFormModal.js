@@ -28,6 +28,33 @@ const MAX_SLOTS_PER_BOOKING = MAX_BOOKING_MINUTES / SLOT_INTERVAL_MINUTES;
 const START_HOUR = 8;
 const END_HOUR = 24;
 
+function utcDateKey(isoString) {
+  return isoString.slice(0, 10); // "YYYY-MM-DD"
+}
+
+function bookingToSlotRange(booking) {
+  const start = new Date(booking.start_time);
+  const end = new Date(booking.end_time);
+
+  const startMinutes =
+    start.getUTCHours() * 60 + start.getUTCMinutes();
+  const endMinutes =
+    end.getUTCHours() * 60 + end.getUTCMinutes();
+
+  const gridStartMinutes = START_HOUR * 60;
+
+  const startIndex = Math.floor(
+    (startMinutes - gridStartMinutes) / SLOT_INTERVAL_MINUTES
+  );
+
+  const endIndex = Math.ceil(
+    (endMinutes - gridStartMinutes) / SLOT_INTERVAL_MINUTES
+  ) - 1;
+
+  return { startIndex, endIndex };
+}
+
+
 function generateSlots() {
   const slots = [];
   let index = 0;
@@ -44,6 +71,68 @@ function generateSlots() {
 
 const allSlots = generateSlots();
 const TOTAL_SLOTS = allSlots.length;
+
+const getBookingAtSlot = (dayIndex, slotIndex) => {
+  // Guard against invalid indices
+  if (!days[dayIndex]) return null;
+  if (slotIndex < 0 || slotIndex >= HOURS.length) return null;
+
+  const day = days[dayIndex];
+
+  // Slot start in minutes since midnight (UTC)
+  const slotMinutes =
+    START_HOUR * 60 + slotIndex * SLOT_INTERVAL_MINUTES;
+
+  // Visible grid bounds in minutes
+  const gridStartMinutes = START_HOUR * 60;
+  const gridEndMinutes = END_HOUR * 60;
+
+  return bookings.find((b) => {
+    if (!b?.start_time || !b?.end_time) return false;
+
+    const startDate = new Date(b.start_time.replace("+00:00", "Z"));
+    const endDate = new Date(b.end_time.replace("+00:00", "Z"));
+
+    if (Number.isNaN(startDate) || Number.isNaN(endDate)) return false;
+
+    // Must be same calendar day (UTC)
+    if (
+      format(startDate, "yyyy-MM-dd") !==
+      format(day, "yyyy-MM-dd")
+    ) {
+      return false;
+    }
+
+    // Booking start/end in minutes (UTC)
+    let bookingStartMinutes =
+      startDate.getUTCHours() * 60 +
+      startDate.getUTCMinutes();
+
+    let bookingEndMinutes =
+      endDate.getUTCHours() * 60 +
+      endDate.getUTCMinutes();
+
+    // Clamp booking to visible grid range
+    bookingStartMinutes = Math.max(
+      bookingStartMinutes,
+      gridStartMinutes
+    );
+    bookingEndMinutes = Math.min(
+      bookingEndMinutes,
+      gridEndMinutes
+    );
+
+    // If booking does not intersect grid at all
+    if (bookingStartMinutes >= bookingEndMinutes) return false;
+
+    // Slot is inside booking range
+    return (
+      slotMinutes >= bookingStartMinutes &&
+      slotMinutes < bookingEndMinutes
+    );
+  });
+};
+
 
 // Helpers
 function toDateObject(dateInput) {
@@ -125,11 +214,20 @@ export default function BookingFormModal({
 
 
   // collision detection: ignores the booking being edited (if any)
-  const isSlotBooked = (index) =>
-    bookings?.some((b) => {
-      if (booking && b.id === booking.id) return false;
-      return index >= b.startIndex && index <= b.endIndex;
+  const selectedDateKey = typeof date === "string"
+  ? date
+  : date.toISOString().slice(0, 10);
+
+  const isSlotBooked = (slotIndex) =>
+    bookings.some((b) => {
+      // must be same calendar day (UTC)
+      if (utcDateKey(b.start_time) !== selectedDateKey) return false;
+
+      const { startIndex, endIndex } = bookingToSlotRange(b);
+
+      return slotIndex >= startIndex && slotIndex <= endIndex;
     });
+
 
   const isSlotSelected = (index) =>
     selectedRange && index >= selectedRange.startIndex && index <= selectedRange.endIndex;
@@ -399,7 +497,7 @@ export default function BookingFormModal({
                 disabled={booked}
                 onClick={() => handleSlotClick(slot.index)}
                 className={`text-xs p-1 rounded border border-(--color-glass-border) ${
-                  booked ? "bg-red-500 cursor-not-allowed text-white" :
+                  booked ? "bg-red-600 cursor-not-allowed text-white" :
                     selected ? "bg-blue-400 text-white" :
                     "bg-(--color-glass-bg) text-black"
                 }`}

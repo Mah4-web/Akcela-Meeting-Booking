@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useUser, SignedIn, SignedOut, SignInButton, SignOutButton } from "@clerk/nextjs";
 import CalendarMonth from "./components/CalendarMonth";
 import WeeklyView from "./components/WeeklyView";
-import BookingModal from "./components/BookingModal";
+import BookingFormModal from "./components/BookingFormModal";
 import SigningModal from "./components/SigningModal"; // our sign-in/sign-up popup
 import { subWeeks, addWeeks } from "date-fns";
 import CalendarHeader from "./components/CalendarHeader";
@@ -16,7 +16,7 @@ export default function HomePage({ bookings }) {
   const [weekStart, setWeekStart] = useState(today);
   const [loadedBookings, setLoadedBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(true);
-
+  
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
@@ -39,12 +39,20 @@ export default function HomePage({ bookings }) {
   }, [bookingsLoading]);
 
 
+  // const handleSelectedBooking = (date) => {
+
+  //   setSelectedBooking(date);
+
+  // }
+
   const handleSlotClick = (date, startIndex = null) => {
     if (!isSignedIn) {
       setSigningModalOpen(true); // show sign-in/sign-up popup
       return;
     }
     setSelectedDate(date);
+    setSelectedBooking(date);
+  
     setBookingModalOpen(true);
   };
 
@@ -142,8 +150,8 @@ export default function HomePage({ bookings }) {
           date={selectedDate}
           user={user}
           bookings={bookings}
-          onClose={() => setModalOpen(false)}
-          onSave={() => setModalOpen(false)}
+          onClose={() => setBookingModalOpen(false)}
+          onSave={() => setBookingModalOpen(false)}
         />
         :
         <BookingFormModal
@@ -151,8 +159,8 @@ export default function HomePage({ bookings }) {
           date={selectedDate}
           user={user}
           bookings={loadedBookings}
-          onClose={() => setModalOpen(false)}
-          onSave={() => setModalOpen(false)}
+          onClose={() => setBookingModalOpen(false)}
+          onSave={() => setBookingModalOpen(false)}
         />
       :
       
