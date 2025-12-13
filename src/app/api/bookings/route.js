@@ -22,7 +22,10 @@ export async function POST(req) {
   const { room_id, start_time, end_time, purpose } = body;
 
   if (!room_id || !start_time || !end_time) {
-    return NextResponse.json({ error: "Missing room_id/start_time/end_time" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing room_id/start_time/end_time" },
+      { status: 400 }
+    );
   }
 
   // Let DB defaults + RLS handle user_id/booked_by if you set defaults.
@@ -36,7 +39,8 @@ export async function POST(req) {
     .select("*")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ booking: data });
 }
 
@@ -53,6 +57,36 @@ export async function DELETE(req) {
 
   const { error } = await supabase.from("bookings").delete().eq("id", id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 403 });
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 403 });
   return NextResponse.json({ ok: true });
+}
+
+export async function PATCH(req) {
+  const { getToken } = auth();
+  const token = await getToken({ template: "supabase" });
+  const supabase = getSupabase(token);
+
+  const body = await req.json();
+  const { id, room_id, start_time, end_time, purpose } = body;
+
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  // Build updates dynamically (only send provided fields)
+  const updates = {};
+  if (room_id !== undefined) updates.room_id = room_id;
+  if (start_time !== undefined) updates.start_time = start_time;
+  if (end_time !== undefined) updates.end_time = end_time;
+  if (purpose !== undefined) updates.purpose = purpose;
+
+  const { data, error } = await supabase
+    .from("bookings")
+    .update(updates)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  return NextResponse.json({ booking: data });
 }
