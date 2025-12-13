@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@clerk/express": "^1.7.57",
     "@clerk/nextjs": "^6.36.2",
     "@supabase/supabase-js": "^2.87.1",
     "date-fns": "^4.1.0",

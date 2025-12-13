@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
+import { headers } from "next/headers";
 
+
+export const runtime = "nodejs";
+
+// Initialize Supabase client (server-side)
 function getSupabase(token) {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -12,14 +17,15 @@ function getSupabase(token) {
   );
 }
 
-// Create booking
 export async function POST(req) {
-  const { getToken } = auth();
-  const token = await getToken({ template: "supabase" });
-  const supabase = getSupabase(token);
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid or missing JSON body." }, { status: 400 });
+  }
 
-  const body = await req.json();
-  const { room_id, start_time, end_time, purpose } = body;
+  const { room_id, start_time, end_time, purpose, booked_by } = body || {};
 
   if (!room_id || !start_time || !end_time) {
     return NextResponse.json(
@@ -28,20 +34,66 @@ export async function POST(req) {
     );
   }
 
-  // Let DB defaults + RLS handle user_id/booked_by if you set defaults.
-  // If you DIDN'T set defaults, uncomment these two lines:
-  // const userId = (await supabase.rpc("get_jwt_sub")).data; // not needed if using defaults
-  // ...but easiest is: set column defaults in DB.
+  console.log('REQUEST BODY', body);
+  // console.log("HEADERS", headers().get("cookie"));
 
+  // Get the logged-in user from Clerk session
+   const { userId, getToken } = await auth();
+  const token = await getToken({ template: "supabase" });
+
+
+if (!userId) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+
+  // Generate Supabase token for row-level security
+
+
+  // console.log('TOKEN', token);
+  // console.log('USER ID', userId);
+
+  const supabase = getSupabase(token);
+
+  // Insert booking with server-detected userId
   const { data, error } = await supabase
     .from("bookings")
-    .insert([{ room_id, start_time, end_time, purpose }])
+    .insert([{
+      user_id: userId,
+      room_id: room_id,
+      start_time: start_time,
+      end_time: end_time,
+      purpose: purpose,
+      booked_by: booked_by
+    }])
     .select("*")
     .single();
 
-  if (error)
+  if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
   return NextResponse.json({ booking: data });
+}
+
+export async function GET() {
+  
+  const { getToken } = await auth();
+
+  const token = await getToken({ template: "supabase" });
+  const supabase = getSupabase(token);
+
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("*")
+    .order("start_time", { ascending: true });
+  if (error) {
+
+    return NextResponse.json({ error: error.message }, { status: 400 });
+
+  }
+
+  console.log("FETCHED BOOKINGS:", data);
+  return NextResponse.json({ bookings: data });
 }
 
 // Delete booking (admin-only via RLS policy)

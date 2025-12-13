@@ -10,19 +10,35 @@ import CalendarHeader from "../components/CalendarHeader";
 import { subWeeks, addWeeks } from "date-fns";
 import { SignOutButton, useUser } from "@clerk/nextjs";
 
+import { useUser, SignedIn, SignedOut, SignInButton, SignOutButton } from "@clerk/nextjs";
+
 export default function CalendarPage() {
   const today = new Date();
   const [weekStart, setWeekStart] = useState(today);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [view, setView] = useState("week"); // default view is week
 
   const { user } = useUser();
 
+  const { user, isSignedIn } = useUser();
+
   const handlePrevWeek = () => setWeekStart(subWeeks(weekStart, 1));
   const handleNextWeek = () => setWeekStart(addWeeks(weekStart, 1));
+
+  const handleSlotClick = (date, startIndex = null) => {
+    if (!isSignedIn) {
+      window.location.href = "/sign-in";
+      return;
+    }
+    setSelectedDate(date);
+    setSelectedBooking({ startIndex }); // optional prefill for weekly/day click
+    setModalOpen(true);
+  };
+
 
   const openBookingModal = (booking = null) => {
     setSelectedBooking(booking);
@@ -58,7 +74,17 @@ export default function CalendarPage() {
   }));
 
   return (
-    <main className="p-6 bg-(--color-gray-light) min-h-screen flex flex-col gap-6">
+    <main className="flex flex-col md:flex-row p-4 md:p-8 gap-6 bg-(--color-gray-light) min-h-screen">
+      {/* Weekly View */}
+      <div className="flex-1">
+        <WeeklyView
+          weekStart={weekStart}
+          onPrevWeek={handlePrevWeek}
+          onNextWeek={handleNextWeek}
+          bookings={sanitizedBookings}
+          onSlotClick={handleSlotClick}
+        />
+      </div>
 
       {/* HEADER */}
       <div className="flex justify-between items-center bg-white/40 border border-(--color-glass-border) shadow-lg backdrop-blur-md p-4 rounded-xl">
@@ -121,6 +147,8 @@ export default function CalendarPage() {
       {modalOpen && (
         <BookingFormModal
           booking={selectedBooking}
+                date={selectedDate}
+           user={user}
           onClose={closeBookingModal}
           onSave={(newBooking) => {
             setBookings((prev) => {
